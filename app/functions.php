@@ -39,73 +39,42 @@ function validateCsrfToken() {
     }
 }
 
-/**
- * Handles the update of task completion status based on form submission.
- *
- * @param PDO $dbCo The database connection object.
- */
 function handleTaskCompletion($dbCo) {
     if (isset($_POST["task"], $_POST["completed"])) {
-        $stmt = $dbCo->prepare("UPDATE task SET completed = ? WHERE Id_task = ?");
-        if ($stmt->execute([(int)$_POST["completed"], (int)$_POST["task"]])) {
-            echo "<p class='success-message'>Task updated successfully!</p>";
-        } else {
-            echo "<p class='error-message'>Error updating task.</p>";
-        }
+        $stmt = $dbCo->prepare("UPDATE task SET completed = :completed WHERE Id_task = :id");
+        $stmt->execute([':completed' => (int)$_POST["completed"], ':id' => (int)$_POST["task"]]);
     }
 }
 
-/**
- * Handles the update of task descriptions based on form submission.
- *
- * @param PDO $dbCo The database connection object.
- */
 function handleTaskDescriptions($dbCo) {
-    $updateStmt = $dbCo->prepare("UPDATE task SET description = ? WHERE Id_task = ?");
-    $descriptionsUpdated = false;
     foreach ($_POST as $key => $value) {
         if (strpos($key, 'description_') === 0) {
             $taskId = (int)substr($key, strlen('description_'));
-            if ($updateStmt->execute([$value, $taskId])) {
-                $descriptionsUpdated = true;
+            $value = trim($value);
+            if (!empty($value)) {
+                $stmt = $dbCo->prepare("UPDATE task SET description = :description WHERE Id_task = :id");
+                $stmt->execute([':description' => $value, ':id' => $taskId]);
+            } else {
+                setErrorMessage("La description de la tâche $taskId ne peut pas être vide.");
             }
         }
     }
-    if ($descriptionsUpdated) {
-        echo "<p class='success-message'>Descriptions updated successfully!</p>";
-    }
 }
 
-/**
- * Handles the addition of a new task based on form submission.
- *
- * @param PDO $dbCo The database connection object.
- * @return array|null The newly added task as an associative array, or null if the addition failed.
- */
 function handleNewTask($dbCo) {
     if (!empty($_POST["new_description"])) {
-        $dbCo->beginTransaction();
-        try {
-            // Increment the order of existing tasks
-            $dbCo->exec("UPDATE task SET `order` = `order` + 1");
+        $description = trim($_POST["new_description"]);
+        if (!empty($description)) {
+           
+            $dbCo->exec("UPDATE task SET `order` = `order` + 1"); 
 
-            // Insert the new task at the top (order = 1)
-            $stmt = $dbCo->prepare("INSERT INTO task (create_date, description, completed, `order`) VALUES (CURRENT_DATE, ?, 0, 1)");
-            $stmt->execute([$_POST["new_description"]]);
-
-            $dbCo->commit();
-            echo "<p class='success-message'>New task added successfully!</p>";
-
-            // Fetch the newly added task
-            $newTask = $dbCo->query("SELECT Id_task, description, completed, `order` FROM task WHERE `order` = 1")->fetch();
-            return $newTask; 
-
-        } catch (Exception $e) {
-            $dbCo->rollBack();
-            echo "<p class='error-message'>Error adding new task: " . $e->getMessage() . "</p>";
+            
+            $stmt = $dbCo->prepare("INSERT INTO task (create_date, description, completed, `order`) VALUES (CURRENT_DATE, :description, 0, 0)");
+            $stmt->execute([':description' => $description]);
+        } else {
+            setErrorMessage("La description de la nouvelle tâche ne peut pas être vide.");
         }
     }
-    return null; // No new task added
 }
 
 /**
