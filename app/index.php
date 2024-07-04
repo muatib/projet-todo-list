@@ -3,27 +3,54 @@ session_start();
 include 'config.php';
 include 'functions.php';
 
+
 $dbCo = connectDb();
 
-// CSRF token management
+
 if (!isset($_SESSION['token']) || (time() - $_SESSION['token_time'] > 3600)) {
     generateCsrfToken();
 }
 
-// Handle form submission
+
+$tasks = []; 
+
+
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     validateCsrfToken();
+
+    if (isset($_POST["move_up"])) {
+        $taskId = (int)$_POST["move_up"];
+        moveTaskUp($dbCo, $taskId);
+    } elseif (isset($_POST["move_down"])) {
+        $taskId = (int)$_POST["move_down"];
+        moveTaskDown($dbCo, $taskId);
+    }
     handleTaskCompletion($dbCo);
     handleTaskDescriptions($dbCo);
-    handleNewTask($dbCo);
-    generateCsrfToken();
+
+    if (isset($_POST["task"])) {
+        $taskIds = $_POST["task"];  
+        $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
+        $stmt = $dbCo->prepare("DELETE FROM task WHERE Id_task IN ($placeholders)"); 
+        $stmt->execute($taskIds);
+        echo "<p class='success-message'>Completed tasks deleted successfully!</p>";
+    }
+   
+    $newTask = handleNewTask($dbCo); 
+    if ($newTask) {
+        array_unshift($tasks, $newTask); 
+    }
+
+    handleTaskOrder($dbCo);
+    generateCsrfToken(); 
 }
 
-// Fetch tasks (en utilisant une requête préparée)
-$stmt = $dbCo->prepare("SELECT Id_task, description, completed, `order` FROM task ORDER BY `order` ASC");
-$stmt->execute();
-$tasks = $stmt->fetchAll();
 
-// Include the HTML for the task list
+$tasksResult = $dbCo->query("SELECT Id_task, description, completed, `order`, reminder_date FROM task ORDER BY `order` ASC");
+if ($tasksResult) {
+    $tasks = $tasksResult->fetchAll();
+}
+
+
 include 'task_list.php';
 ?>
