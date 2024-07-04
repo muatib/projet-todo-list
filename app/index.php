@@ -25,17 +25,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $taskId = (int)$_POST["move_down"];
         moveTaskDown($dbCo, $taskId);
     }
+    
     handleTaskCompletion($dbCo);
     handleTaskDescriptions($dbCo);
 
+   
     if (isset($_POST["task"])) {
-        $taskIds = $_POST["task"];  
+        $taskIds = $_POST["task"]; 
         $placeholders = implode(',', array_fill(0, count($taskIds), '?'));
         $stmt = $dbCo->prepare("DELETE FROM task WHERE Id_task IN ($placeholders)"); 
         $stmt->execute($taskIds);
         echo "<p class='success-message'>Completed tasks deleted successfully!</p>";
     }
-   
+
+    
     $newTask = handleNewTask($dbCo); 
     if ($newTask) {
         array_unshift($tasks, $newTask); 
@@ -52,5 +55,21 @@ if ($tasksResult) {
 }
 
 
+$tasksDueToday = array_filter($tasks, function($task) {
+    return !$task['completed'] && $task['reminder_date'] === date('Y-m-d');
+});
+
+
 include 'task_list.php';
+
+if (!empty($tasksDueToday)) {
+    echo "<div class='notification'>";
+    echo "<p>Tâches à effectuer aujourd'hui :</p>";
+    echo "<ul class='notification-list'>";
+    foreach ($tasksDueToday as $task) {
+        echo "<li>{$task['description']}</li>";
+    }
+    echo "</ul>";
+    echo "</div>";
+}
 ?>
