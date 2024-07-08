@@ -19,6 +19,7 @@ body {
 
 .task-box {
   display: flex;
+  justify-content: space-between;
   align-items: center;
   font-size: 14px;
   border-radius: 5px;
@@ -26,20 +27,23 @@ body {
   margin-bottom: 8px;
   margin-left: 35px;
   background-color: #aae469;
-  transition: background-color 0.3s ease, color 0.3s ease;
-
-  max-width: 80%;
+  transition: background-color 0.3s ease, opacity 0.3s ease;
+  width: fit-content;
 }
-
+.task-box.completed {
+  background-color: #add8e6; 
+  opacity: 0.5; 
+  text-decoration: line-through; 
+}
 .task-box:hover {
   background-color: #94d82d;
 }
 
 .task-content {
-  
   display: flex;
+  flex-direction: row;
   align-items: center;
-  width: 100%;
+  margin-right: 10px; 
 }
 
 
@@ -167,8 +171,9 @@ body {
   padding: 0;
 }
 .task-box.completed {
-  background-color: #e0e0e0; 
-  text-decoration: line-through; 
+  
+    display: none; 
+
 }
 
 .show-completed-button {
@@ -180,4 +185,54 @@ body {
   border: none;
   border-radius: 4px;
   text-decoration: none; 
+}
+#completedTaskList {
+  margin-top: 20px; 
+}
+
+#completedTaskList .task-box {
+  opacity: 0.7; 
+}
+#toggleCompletedTasks {
+  display: block;
+  margin: 20px auto; /* Centrage horizontal */
+  padding: 10px 20px; /* Espacement interne */
+  background-color: #4CAF50; /* Vert similaire à "Ajouter" */
+  color: white;
+  border: none;
+  border-radius: 50px; /* Coins arrondis comme "Ajouter" */
+  cursor: pointer;
+  font-size: 16px; /* Taille de police cohérente */
+}
+
+#toggleCompletedTasks:hover {
+  background-color: #45a049; /* Légère variation au survol */
+}
+#toggleCompletedTasks:before {
+  content: "👁 "; /* Icône "oeil" (tu peux utiliser une autre icône si tu préfères) */
+  margin-right: 5px;
+}
+.notification {
+  background-color: #ff9800; 
+  color: white;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  position: relative; /* Pour positionner le bouton de fermeture */
+}
+
+.notification-list {
+  list-style: none;
+  padding: 0;
+}
+
+#dismissNotification {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 18px;
 }
